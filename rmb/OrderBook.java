@@ -1,6 +1,11 @@
 package rmb;
 
-import java.util.*;
+import java.util.List;
+import java.util.TreeMap;
+import java.util.Iterator;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.Collections;
 
 public class OrderBook {
     private TreeMap<Double, List<Order>> sellOrdersByPrice = new TreeMap<>();
@@ -86,6 +91,7 @@ public class OrderBook {
     public int getTotalCount() {
         return getBuyCount() + getSellCount();
     }
+
     private void addOrder(Order order) {
         TreeMap<Double, List<Order>> ordersByPrice = (order.getSide() == Side.BUY) ? buyOrdersByPrice : sellOrdersByPrice;
         ordersByPrice.computeIfAbsent(order.getPrice(), k -> new ArrayList<>()).add(order);
@@ -102,6 +108,27 @@ public class OrderBook {
                 ordersByPrice.put(entry.getKey(), orders);
             }
             break;
+        }
+    }
+
+    public void updateOrder(Order order) {
+        TreeMap<Double, List<Order>> ordersByPrice = order.getSide() == Side.BUY ? buyOrdersByPrice : sellOrdersByPrice;
+        for (Map.Entry<Double, List<Order>> entry : ordersByPrice.entrySet()) {
+            List<Order> orders = entry.getValue();
+            Iterator<Order> iterator = orders.iterator();
+            while (iterator.hasNext()) {
+                Order orderFound = iterator.next();
+                if (orderFound.getId() == order.getId()) {
+                    iterator.remove();
+                    if (orders.isEmpty()) {
+                        ordersByPrice.remove(entry.getKey());
+                    }
+                    orderFound.setPrice(order.getPrice());
+                    orderFound.setQuantity(order.getQuantity());
+                    addOrder(orderFound);
+                    return;
+                }
+            }
         }
     }
 }
